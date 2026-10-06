@@ -1,1 +1,2 @@
 npx playwright test --> correr test
+npx playwright test --project=firefox solo para firebox

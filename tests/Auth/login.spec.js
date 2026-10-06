@@ -3,17 +3,13 @@
 // ├── usuario puede iniciar sesión correctamente
 // ├── usuario no puede iniciar sesión con contraseña incorrecta
 // ├── usuario no puede iniciar sesión con email incorrecto
-// ├── usuario no puede iniciar sesión con campos vacíos
-// ├── usuario no puede iniciar sesión con email vacío
-// ├── usuario no puede iniciar sesión con contraseña vacía
-// └── contraseña se puede mostrar/ocultar
-// @ts-check
+//  empy field such as email or password are tested with Jest
 
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../pages/LoginPage';
 
 
-test('el usuario puede completar el login', async ({ page }) => {
+test('The user can complete the login', async ({ page }) => {
   const email = process.env.TEST_EMAIL;
   const password = process.env.TEST_PASSWORD;
 
@@ -35,7 +31,7 @@ test('el usuario puede completar el login', async ({ page }) => {
   ).toBeVisible();
 });
 
-test('el usuario no puede iniciar sesión con una contraseña incorrecta', async ({
+test('The user cannot log in with an incorrect password', async ({
   page,
 }) => {
   const email = process.env.TEST_EMAIL;
@@ -52,3 +48,22 @@ test('el usuario no puede iniciar sesión con una contraseña incorrecta', async
     page.getByText('Dashboard', { exact: true })
   ).not.toBeVisible();
 });
+
+test('The user cannot log in with an incorrect user', async ({
+  page,
+}) => {
+  const password = process.env.TEST_PASSWORD;
+  const loginPage = new LoginPage(page);
+
+  await loginPage.goto();
+
+  await loginPage.login(
+    "incorrect user",
+    password
+  );
+
+  await expect(
+    page.getByText('Dashboard', { exact: true })
+  ).not.toBeVisible();
+});
+

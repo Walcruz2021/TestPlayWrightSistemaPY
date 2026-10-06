@@ -14,7 +14,10 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/', {
+      waitUntil: 'domcontentloaded',//continue when main HTMl/DOM already loaded 
+      timeout: 60000 //allow 60 seconds for the page to load
+    });
   }
 
   async login(email, password) {
