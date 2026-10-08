@@ -1,2 +1,7 @@
 npx playwright test --> correr test
 npx playwright test --project=firefox solo para firebox
+
+
+//siempre correr este test ya que regitser solo funcionara una sola vez salvo que se eliminen
+//los email de firebase y mongo para que funcionen nuevamente
+npx playwright test --grep-invert "register" correr todos los test menos el register

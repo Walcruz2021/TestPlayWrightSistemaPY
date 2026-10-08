@@ -6,25 +6,55 @@
 
 import { test, expect } from '@playwright/test';
 import { RegisterPage } from '../pages/RegisterPage';
+import { LoginPage } from '../pages/LoginPage';
 
 
-test('The user can complete the register', async ({ page }) => {
-
-
+test('The user can complete the register', async ({ page }, testInfo) => {
   const registerPage = new RegisterPage(page);
+  const loginPage = new LoginPage(page);
+
+  const email = testInfo.project.use.testEmail;
+
+
+  //code to log browser console messages, page errors, and HTTP responses
+  // page.on('console', msg => {
+  //   console.log('BROWSER:', msg.text());
+  // });
+
+  // page.on('pageerror', error => {
+  //   console.log('PAGE ERROR:', error.message);
+  // });
+
+  // page.on('response', response => {
+  //   if (response.status() >= 400) {
+  //     console.log(
+  //       'HTTP ERROR:',
+  //       response.status(),
+  //       response.url()
+  //     );
+  //   }
+  // });
 
   await registerPage.goto();
 
   await registerPage.register(
     'Walter',
     'Cruz',
-    'walter.test@example.com',
+    email,
     'Test123456',
     'Test123456'
   );
 
+  await expect(
+    page.getByText('¡Usuario Creado. Se envió un Link de Verificación!')
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Aceptar' }).click();
+
+  await expect(page).toHaveURL(/\/login\/?$/);
 
 });
+
 
 test('The user cannot register with an existing email', async ({ page }) => {
   const email = process.env.TEST_EMAIL;
