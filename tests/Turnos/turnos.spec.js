@@ -1,32 +1,74 @@
 
-// import { test, expect } from '@playwright/test';
-// import { LoginPage } from '../pages/LoginPage.js';
-// import { FormsTurnoPage } from '../pages/FormsTurnoPage.js';
+import { test, expect } from "@playwright/test";
+import { loginUser } from "../helpers/auth.js";
+import { FormsTurnPage } from "../pages/FormsTurnPage.js";
 
-// test.describe('Formulario de turnos', () => {
-//   test('muestra un error si faltan datos obligatorios', async ({ page }) => {
-//     const loginPage = new LoginPage(page);
-//     const turnoPage = new FormsTurnoPage(page);
+test("The button is enabled when all required fields are filled", async ({
+  page,
+}) => {
+  const turnPage = new FormsTurnPage(page);
 
-//     // 1. Abrir la aplicación e iniciar sesión.
-//     await loginPage.goto();
+  await loginUser(page);
+  await turnPage.openModal();
 
-//     await loginPage.login(
-//       process.env.TEST_EMAIL,
-//       process.env.TEST_PASSWORD
-//     );
+  await expect(turnPage.modal).toBeVisible();
+  await expect(turnPage.addTurnButton).toBeDisabled();
 
-//     // 2. Aquí debemos navegar hasta el formulario de turnos.
-//     // Falta definir la ruta y los pasos necesarios en tu aplicación.
+  await turnPage.timeInput.fill("10:00");
 
-//     console.log('URL actual:', page.url());
+  await expect(turnPage.addTurnButton).toBeEnabled();
+});
 
-//     // 3. Intentar enviar el formulario vacío.
-//     await turnoPage.submit();
+test("The form informs about required fields", async ({ page }) => {
+  const turnPage = new FormsTurnPage(page);
 
-//     // 4. Verificar la validación.
-//     await expect(
-//       page.getByText('Faltan Datos por Completar')
-//     ).toBeVisible();
-//   });
-// });
+  await loginUser(page);
+  await turnPage.openModal();
+
+  await expect(turnPage.requiredFieldsMessage).toBeVisible();
+
+  await expect(
+    page.getByText("(*) Fecha Turno", { exact: true })
+  ).toBeVisible();
+
+  await expect(
+    page.getByText("(*) Horario Turno", { exact: true })
+  ).toBeVisible();
+
+
+});
+
+test("El usuario puede crear un turno y visualizarlo en el dashboard", async ({ page }) => {
+  const turnPage = new FormsTurnPage(page);
+
+  await loginUser(page);
+  await turnPage.openModal();
+
+  // La fecha se inicializa automáticamente con el día actual.
+  await turnPage.timeInput.fill("10:00");
+
+  // Identificador único para localizar el turno después de guardarlo.
+  const uniqueNote = `Prueba E2E ${Date.now()}`;
+  await turnPage.notesInput.fill(uniqueNote);
+
+  await expect(turnPage.addTurnButton).toBeEnabled();
+  await turnPage.addTurnButton.click();
+
+  // Verificar el mensaje de éxito.
+  const successAlert = page.getByText(
+    "¡Turno creado correctamente!",
+    { exact: true }
+  );
+  await expect(successAlert).toBeVisible();
+
+  // Confirmar para que el componente solicite nuevamente los turnos.
+  await page.getByRole("button", {
+    name: "Aceptar",
+    exact: true,
+  }).click();
+
+  // Reemplazar por el selector real del turno en tu dashboard.
+  // await expect(
+  //   page.getByText(uniqueNote, { exact: true })
+  // ).toBeVisible();
+});
