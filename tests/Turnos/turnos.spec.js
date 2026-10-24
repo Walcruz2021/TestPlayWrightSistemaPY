@@ -38,37 +38,91 @@ test("The form informs about required fields", async ({ page }) => {
 
 });
 
-test("El usuario puede crear un turno y visualizarlo en el dashboard", async ({ page }) => {
+
+test("The system does not allow users to create an appointment with a past date.", async ({ page }) => {
   const turnPage = new FormsTurnPage(page);
 
   await loginUser(page);
   await turnPage.openModal();
 
-  // La fecha se inicializa automáticamente con el día actual.
-  await turnPage.timeInput.fill("10:00");
+  // Generar la fecha de ayer en horario local.
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
 
-  // Identificador único para localizar el turno después de guardarlo.
+  const year = yesterday.getFullYear();
+  const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+  const day = String(yesterday.getDate()).padStart(2, "0");
+
+  const dateString = `${year}-${month}-${day}`;
+
   const uniqueNote = `Prueba E2E ${Date.now()}`;
+
+  await turnPage.dateInput.fill(dateString);
+  await turnPage.timeInput.fill("10:00");
+  await turnPage.notesInput.fill(uniqueNote);
+
+  // Verificar que el botón esté habilitado porque hay fecha y hora.
+  await expect(turnPage.addTurnButton).toBeEnabled();
+
+  await turnPage.addTurnButton.click();
+
+  // Verificar que la aplicación rechace la fecha pasada.
+  await expect(
+    page.getByText("Fecha Incorrecta", { exact: true })
+  ).toBeVisible();
+});
+
+
+test("The modal is reset after creating a new appointment.", async ({ page }) => {
+  const turnPage = new FormsTurnPage(page);
+
+  await loginUser(page);
+  await turnPage.openModal();
+
+  const uniqueNote = `Prueba E2E ${Date.now()}`;
+
+  // Completar los campos del turno.
+    // Generar la fecha de ayer en horario local.
+  const yesterday = new Date();
+
+
+  const year = yesterday.getFullYear();
+  const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+  const day = String(yesterday.getDate()).padStart(2, "0");
+
+  const dateString = `${year}-${month}-${day}`;
+
+  await turnPage.dateInput.fill(dateString);
+  await turnPage.timeInput.fill("10:00");
   await turnPage.notesInput.fill(uniqueNote);
 
   await expect(turnPage.addTurnButton).toBeEnabled();
+
+  // Crear el turno.
   await turnPage.addTurnButton.click();
 
-  // Verificar el mensaje de éxito.
-  const successAlert = page.getByText(
-    "¡Turno creado correctamente!",
-    { exact: true }
-  );
-  await expect(successAlert).toBeVisible();
+  // Confirmar el mensaje de éxito.
+  await expect(
+    page.getByText("¡Turno creado correctamente!", { exact: true })
+  ).toBeVisible();
 
-  // Confirmar para que el componente solicite nuevamente los turnos.
-  await page.getByRole("button", {
-    name: "Aceptar",
-    exact: true,
-  }).click();
+  await page.getByRole("button", { name: "Aceptar", exact: true }).click();
 
-  // Reemplazar por el selector real del turno en tu dashboard.
-  // await expect(
-  //   page.getByText(uniqueNote, { exact: true })
-  // ).toBeVisible();
+  // Volver a abrir el modal.
+  await turnPage.openModal();
+
+  // Comprobar que los campos estén reiniciados.
+  // await expect(turnPage.dateInput).toHaveValue(dateString);
+
+  await expect(turnPage.timeInput).toHaveValue("");
+  await expect(turnPage.notesInput).toHaveValue("");
+
+  // Comprobar que los selectores vuelvan a sus placeholders.
+  await expect(
+    page.getByText("Seleccione Cliente", { exact: true })
+  ).toBeVisible();
+
+  await expect(
+    page.getByText("Seleccione Mascota", { exact: true })
+  ).toBeVisible();
 });
